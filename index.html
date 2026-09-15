@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>歴史異聞録 ― 戦国編 ―</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#17130f;color:#f8f1df;font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif}
+#app{max-width:680px;margin:auto;min-height:100vh;background:linear-gradient(#2a2119,#17130f)}
+header{padding:12px 14px;background:#30251b;border-bottom:2px solid #8f6d3d;position:sticky;top:0;z-index:5}
+h1{font-size:20px;margin:0 0 3px}.sub{font-size:12px;color:#cdbf9e}
+.panel{margin:10px;padding:13px;background:#251d16;border:1px solid #6e5432;border-radius:12px;box-shadow:0 4px 14px #0006}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}.stat{background:#18130f;padding:7px 3px;border-radius:8px;text-align:center;font-size:11px}.stat b{display:block;font-size:17px;color:#f2ca73}
+.bar{height:8px;background:#111;border-radius:99px;overflow:hidden;margin-top:4px}.bar i{display:block;height:100%;background:#9b2f2f}.exp i{background:#8c6bd1}
+button{width:100%;padding:12px;margin:4px 0;border:1px solid #977344;border-radius:9px;background:#49351f;color:#fff5df;font-size:14px;font-weight:700}
+button:active{transform:scale(.98)}button:disabled{opacity:.45}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}.grid button{margin:0}
+.screen{display:none}.screen.active{display:block}
+.log{max-height:135px;overflow:auto;font-size:12px;line-height:1.6;color:#d9ceb8}
+.choice.correct{background:#28552e}.choice.wrong{background:#662d2d}
+.enemy{text-align:center;padding:10px}.enemy .emoji{font-size:54px}.enemy h2{margin:3px}
+.map{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.place{cursor:pointer;user-select:none;touch-action:manipulation;min-height:76px;display:flex;flex-direction:column;justify-content:center;align-items:center;background:#302519;border:1px solid #765936;border-radius:10px;font-size:12px}.place span{font-size:26px}.place small{margin-top:3px;color:#cdbf9e}
+.badge{display:inline-block;padding:3px 7px;border-radius:99px;background:#59431f;font-size:10px;margin-left:4px}
+.notice{color:#f0c878;font-size:12px;text-align:center;margin:7px}
+.modal{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;padding:15px;z-index:20}.modal.show{display:flex}.modalbox{max-width:600px;width:100%;max-height:88vh;overflow:auto;background:#251d16;border:1px solid #9a7844;border-radius:14px;padding:17px}
+.branch{display:grid;gap:7px;margin-top:12px}.branch button{text-align:left}
+.danger{color:#ef8d76}.good{color:#8bd39b}
+.action-count{font-size:12px;color:#d8c69f;text-align:center}
+hr{border:0;border-top:1px solid #5e4930;margin:10px 0}
+
+.flash{animation:flash .45s ease}.shake{animation:shake .4s ease}.slide{animation:slide .45s ease}
+@keyframes flash{0%{opacity:.3;transform:scale(.97)}60%{opacity:1;transform:scale(1.03)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+@keyframes slide{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.mode{font-weight:800;color:#f0c878}
+.action-flash{animation:actionFlash .38s ease}
+.place.pressed{animation:placePress .45s ease}
+.hit{animation:hit .38s ease}
+.heal{animation:heal .55s ease}
+.reward{animation:reward .5s ease}
+.screen.active{animation:screenIn .28s ease}
+#effectText{position:fixed;left:50%;top:32%;transform:translate(-50%,-50%);z-index:30;pointer-events:none;font-size:25px;font-weight:900;text-shadow:0 3px 8px #000;opacity:0}
+#effectText.show{animation:floatEffect .75s ease forwards}
+@keyframes actionFlash{0%{filter:brightness(1)}45%{filter:brightness(1.65)}100%{filter:brightness(1)}}
+@keyframes placePress{0%{transform:scale(1)}35%{transform:scale(.94)}70%{transform:scale(1.05)}100%{transform:scale(1)}}
+@keyframes hit{0%{transform:translateX(0) scale(1)}25%{transform:translateX(-9px) scale(1.05)}50%{transform:translateX(9px) scale(.98)}100%{transform:translateX(0) scale(1)}}
+@keyframes heal{0%{filter:brightness(1);transform:scale(1)}45%{filter:brightness(1.7);transform:scale(1.06)}100%{filter:brightness(1);transform:scale(1)}}
+@keyframes reward{0%{transform:scale(.9);opacity:.6}55%{transform:scale(1.12);opacity:1}100%{transform:scale(1)}}
+@keyframes screenIn{from{opacity:.35;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+@keyframes floatEffect{0%{opacity:0;transform:translate(-50%,-35%) scale(.75)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}75%{opacity:1;transform:translate(-50%,-65%) scale(1)}100%{opacity:0;transform:translate(-50%,-95%) scale(.96)}}
+</style>
+</head>
+<body>
+<div id="effectText"></div>
+<div id="app">
+<header>
+  <h1>⚔️ 歴史異聞録 ― 戦国編 ―</h1>
+  <div class="sub">行動するほど時代が動く。選択で歴史を変えろ。</div>
+  <div style="margin-top:7px;display:flex;gap:6px">
+    <button style="margin:0;padding:7px" onclick="setMode('japan')">🇯🇵 日本史</button>
+    <button style="margin:0;padding:7px" onclick="setMode('world')">🌍 世界史</button>
+  </div>
+</header>
+
+<section id="home" class="screen active">
+<div class="panel">
+  <div><b id="heroName">旅人</b><span class="badge">行動 <span id="actions">0</span></span><span class="badge">次の強制イベントまで <span id="nextEvent">3</span>行動</span></div>
+  <div class="stats" style="margin-top:8px">
+    <div class="stat">Lv<b id="lv">1</b></div><div class="stat">HP<b id="hp">100</b></div>
+    <div class="stat">攻撃<b id="atk">10</b></div><div class="stat">防御<b id="def">8</b></div>
+  </div>
+  <div style="margin-top:9px">EXP <span id="expText">0 / 100</span><div class="bar exp"><i id="expBar" style="width:0%"></i></div></div>
+  <div style="margin-top:8px;font-size:12px">所持金：<b id="gold">50</b> 両　／　敵強化：<b id="threat">0%</b></div>
+</div>
+
+<div class="panel">
+<h3 style="margin-top:0">⚔️ 主要行動</h3>
+<div class="grid">
+<button onclick="doAction(()=>go('map'))">🗺️ 探索</button>
+<button onclick="doAction(()=>startQuiz(5),true)">📜 歴史修行</button>
+<button onclick="doAction(()=>startBattle(),true)">⚔️ 戦う</button>
+
+</div>
+<hr>
+<div class="grid">
+<button onclick="saveGame()">💾 セーブ</button>
+<button onclick="loadGame(true)">📂 セーブから復帰</button>
+<button onclick="resetGame()">🔄 ゲームをリセット</button>
+
+</div>
+</div>
+<div class="panel"><h3 style="margin:4px 0">📜 冒険記録</h3><div id="log" class="log"></div></div>
+</section>
+
+<section id="map" class="screen">
+<div class="panel"><h2 style="margin-top:0">🗺️ 戦国の地図</h2><p class="sub">場所を選ぶと、その場で分岐が発生することがあります。</p>
+<div class="map">
+<div class="place" onclick="doAction(eventTown,this)"><span>🏯</span>尾張の城</div>
+<div class="place" onclick="doAction(eventVillage,this)"><span>🏘️</span>村</div>
+<div class="place" onclick="doAction(eventShrine,this)"><span>⛩️</span>神社</div>
+<div class="place" onclick="doAction(eventTrader,this)"><span>🧺</span>商人</div>
+<div class="place" onclick="doAction(eventInn,this)"><span>🏮</span>宿場</div>
+</div></div>
+<div class="panel"><button onclick="go('home')">← 戻る</button></div>
+</section>
+
+<section id="quiz" class="screen">
+<div class="panel"><div class="sub">歴史修行　問題 <span id="qnum"></span></div><h2 id="qtext"></h2><div id="choices"></div><div id="explain" class="notice"></div></div>
+<div class="panel"><button onclick="go('home')">中断する</button></div>
+</section>
+
+<section id="battle" class="screen">
+<div class="panel enemy"><div class="sub">遭遇 <span class="badge">脅威 <span id="enemyThreat">0%</span></span></div><div class="emoji" id="enemyEmoji">👹</div><h2 id="enemyName">野盗</h2>
+<div>HP <span id="enemyHp"></span> / <span id="enemyMax"></span></div><div class="bar"><i id="enemyBar"></i></div>
+<div class="sub" style="margin-top:6px">攻撃 <b id="enemyAtk"></b>　防御 <b id="enemyDef"></b></div></div>
+<div class="panel"><h3 style="margin-top:0">主人公</h3><div>HP <span id="playerHp"></span> / <span id="playerMax"></span></div><div class="bar"><i id="playerBar"></i></div>
+<div class="grid" style="margin-top:9px"><button onclick="attack()">⚔️ 攻撃</button><button onclick="guard()">🛡️ 防御</button><button onclick="battleSkill()">🔥 必殺技</button><button onclick="runAway()">🏃 逃げる</button></div></div>
+<div class="panel"><div id="battleLog" class="log"></div></div>
+</section>
+
+<div id="modal" class="modal"><div class="modalbox"><h2 id="modalTitle"></h2><div id="modalText"></div><div id="modalButtons"></div></div></div>
+</div>
+
+<script>
+const sourceNote="高校受験・高校定期テスト・高校教科書/参考書/問題集・大学受験で扱われる歴史事項と学習範囲に沿って新規作成した問題。既存教材・過去問の問題文はそのまま転載しない。";
+const jpBase=[['大化の改新が始まった年', ['645年', '538年', '710年', '794年'], 0, '645年に中大兄皇子・中臣鎌足らが改革を始めた。'], ['聖徳太子が定めたとされる冠位十二階', ['冠位十二階', '班田収授法', '三世一身法', '武家諸法度'], 0, '603年に定められたとされる。'], ['平城京に都が移された年', ['710年', '694年', '794年', '1185年'], 0, '710年に平城京へ遷都した。'], ['平安京に都が移された年', ['794年', '710年', '1156年', '1336年'], 0, '794年の平安京遷都。'], ['鎌倉幕府を開いた人物', ['源頼朝', '平清盛', '足利尊氏', '徳川家康'], 0, '源頼朝が鎌倉を本拠に武家政権を成立させた。'], ['承久の乱で敗れた朝廷側を率いた上皇', ['後鳥羽上皇', '白河上皇', '後醍醐天皇', '鳥羽上皇'], 0, '1221年の承久の乱。'], ['元寇のうち1274年の戦い', ['文永の役', '弘安の役', '応仁の乱', '保元の乱'], 0, '1274年の元軍襲来。'], ['室町幕府を開いた人物', ['足利尊氏', '足利義満', '新田義貞', '北条時宗'], 0, '1338年に征夷大将軍となった。'], ['日明貿易を正式に始めた室町幕府の将軍', ['足利義満', '足利尊氏', '足利義政', '足利義昭'], 0, '勘合を用いた日明貿易を進めた。'], ['応仁の乱が始まった年', ['1467年', '1392年', '1543年', '1600年'], 0, '1467年に始まり戦国時代の幕開けの一因となった。'], ['鉄砲が伝来した島', ['種子島', '佐渡島', '淡路島', '対馬'], 0, '1543年に種子島へ伝来した。'], ['キリスト教を日本に伝えた宣教師', ['フランシスコ・ザビエル', 'ルイス・フロイス', 'バスコ・ダ・ガマ', 'マルコ・ポーロ'], 0, '1549年に来日した。'], ['楽市・楽座を進めた戦国大名', ['織田信長', '武田信玄', '上杉謙信', '毛利元就'], 0, '商業活動の自由化を進めた。'], ['本能寺の変が起こった年', ['1582年', '1575年', '1590年', '1600年'], 0, '明智光秀が織田信長を襲撃した。'], ['刀狩を行った人物', ['豊臣秀吉', '織田信長', '徳川家康', '足利義満'], 0, '1588年に刀狩令を出した。'], ['関ヶ原の戦いが起こった年', ['1600年', '1590年', '1615年', '1637年'], 0, '徳川家康側が勝利した。'], ['江戸幕府を開いた人物', ['徳川家康', '豊臣秀吉', '徳川家光', '徳川吉宗'], 0, '1603年に征夷大将軍となった。'], ['参勤交代を制度として整えた将軍', ['徳川家光', '徳川家康', '徳川綱吉', '徳川吉宗'], 0, '大名統制策として制度化した。'], ['島原・天草一揆が起こった年', ['1637年', '1600年', '1688年', '1716年'], 0, 'キリスト教弾圧や重税などを背景に起きた。'], ['鎖国下で貿易を行ったオランダ商館の所在地', ['出島', '堺', '長崎奉行所', '平戸城'], 0, '長崎の出島で交易を行った。'], ['享保の改革を行った将軍', ['徳川吉宗', '徳川綱吉', '徳川家斉', '徳川家光'], 0, '1716年に将軍となり改革を進めた。'], ['寛政の改革を行った老中', ['松平定信', '田沼意次', '水野忠邦', '大岡忠相'], 0, '1787年から改革を進めた。'], ['天保の改革を主導した老中', ['水野忠邦', '松平定信', '田沼意次', '井伊直弼'], 0, '1841年から改革を進めた。'], ['ペリーが来航した年', ['1853年', '1842年', '1858年', '1868年'], 0, '浦賀に来航した。'], ['日米修好通商条約を結んだ大老', ['井伊直弼', '阿部正弘', '勝海舟', '坂本龍馬'], 0, '1858年に締結を進めた。'], ['大政奉還を行った将軍', ['徳川慶喜', '徳川家茂', '徳川吉宗', '徳川家光'], 0, '1867年に政権を朝廷へ返上した。'], ['五箇条の御誓文が出された年', ['1868年', '1853年', '1871年', '1889年'], 0, '明治新政府の基本方針を示した。'], ['廃藩置県が行われた年', ['1871年', '1868年', '1877年', '1889年'], 0, '藩を廃して府県を置いた。'], ['西南戦争が起こった年', ['1877年', '1871年', '1881年', '1894年'], 0, '西郷隆盛らが政府軍と戦った。'], ['自由民権運動の中心人物の一人', ['板垣退助', '伊藤博文', '大久保利通', '岩倉具視'], 0, '自由党を結成した。'], ['大日本帝国憲法が発布された年', ['1889年', '1881年', '1890年', '1900年'], 0, '1889年2月11日に発布された。'], ['日清戦争が始まった年', ['1894年', '1890年', '1904年', '1910年'], 0, '朝鮮半島をめぐる対立から開戦した。'], ['日露戦争が始まった年', ['1904年', '1894年', '1905年', '1914年'], 0, '日本とロシアが開戦した。'], ['韓国併合が行われた年', ['1910年', '1905年', '1914年', '1925年'], 0, '日本が韓国を併合した。'], ['第一次世界大戦後に成立した国際機関', ['国際連盟', '国際連合', 'ワルシャワ条約機構', 'NATO'], 0, '1920年に発足した。'], ['普通選挙法が成立した年', ['1925年', '1918年', '1920年', '1931年'], 0, '25歳以上の男子に選挙権を広げた。'], ['満州事変が起こった年', ['1931年', '1927年', '1937年', '1941年'], 0, '関東軍が柳条湖事件を契機に満州を占領した。'], ['日中戦争が始まった年', ['1937年', '1931年', '1939年', '1941年'], 0, '盧溝橋事件を契機に全面化した。'], ['太平洋戦争が始まった年', ['1941年', '1937年', '1940年', '1945年'], 0, '真珠湾攻撃を契機に始まった。'], ['日本国憲法が施行された年', ['1947年', '1945年', '1946年', '1952年'], 0, '1947年5月3日に施行された。'], ['サンフランシスコ平和条約が発効した年', ['1952年', '1947年', '1951年', '1960年'], 0, '日本の主権回復につながった。'], ['高度経済成長期の代表的な公害病', ['水俣病', 'イタイイタイ病', '四日市ぜんそく', '森永ヒ素ミルク中毒'], 0, '熊本県水俣市周辺で発生した。'], ['沖縄が日本に返還された年', ['1972年', '1965年', '1970年', '1978年'], 0, '1972年に施政権が返還された。'], ['日中国交正常化が行われた年', ['1972年', '1965年', '1972年', '1978年'], 0, '1972年に国交を正常化した。'], ['プラザ合意が結ばれた年', ['1985年', '1973年', '1989年', '1991年'], 0, '1985年の為替協調合意。'], ['バブル経済崩壊後の長期不況の時期にあたる通称', ['失われた10年', '黄金の20年', '大正デモクラシー', '高度成長期'], 0, '1990年代を中心に使われる表現。'], ['東大寺の大仏造立を命じた天皇', ['聖武天皇', '桓武天皇', '天智天皇', '後白河法皇'], 0, '国家鎮護を願い大仏を造立した。'], ['鎌倉新仏教の一つで法然が開いた宗派', ['浄土宗', '浄土真宗', '日蓮宗', '曹洞宗'], 0, '念仏を重視する宗派。'], ['江戸時代の身分制度で武士・農民・職人・商人を指す語', ['士農工商', '公家武家制', '班田制', '荘園制'], 0, '近世社会を説明する際に用いられる。'], ['明治政府が徴兵令を出した年', ['1873年', '1868年', '1871年', '1889年'], 0, '国民皆兵を原則とする制度を整えた。'], ['岩倉使節団の代表的な派遣目的', ['欧米の制度・文化の調査', '朝鮮征討', '鎖国の復活', '日清戦争の指揮'], 0, '1871年から欧米を視察した。']];
+const worldBase=[['古代エジプト文明が栄えた河川', ['ナイル川', '黄河', 'インダス川', 'ユーフラテス川'], 0, 'ナイル川流域で文明が発展した。'], ['メソポタミア文明と関係が深い河川', ['チグリス・ユーフラテス川', 'ナイル川', 'ガンジス川', 'セーヌ川'], 0, '西アジアの河川文明。'], ['ハンムラビ法典を制定した王', ['ハンムラビ', 'ダレイオス1世', 'アショーカ王', 'アウグストゥス'], 0, 'バビロニア王国の王。'], ['古代ギリシアの民主政で有名な都市国家', ['アテネ', 'スパルタ', 'ローマ', 'カルタゴ'], 0, '民会を中心とする民主政が発達した。'], ['アレクサンドロス大王が率いた国', ['マケドニア王国', 'ペルシア帝国', 'ローマ帝国', 'ビザンツ帝国'], 0, '東方遠征で広大な領域を支配した。'], ['ローマ帝国の初代皇帝とされる人物', ['アウグストゥス', 'カエサル', 'ネロ', 'コンスタンティヌス'], 0, '帝政を確立した。'], ['キリスト教を公認したローマ皇帝', ['コンスタンティヌス帝', 'ネロ帝', 'ディオクレティアヌス帝', 'ユスティニアヌス帝'], 0, '313年のミラノ勅令。'], ['イスラーム教を創始した人物', ['ムハンマド', 'アリー', 'サラディン', 'イブン・シーナー'], 0, '7世紀にアラビア半島で布教した。'], ['イスラーム帝国で最初の世襲王朝', ['ウマイヤ朝', 'アッバース朝', 'ファーティマ朝', 'オスマン帝国'], 0, '661年に成立した。'], ['十字軍の目的地の中心となった聖地', ['エルサレム', 'ローマ', 'コンスタンティノープル', 'メッカ'], 0, 'キリスト教徒にとっての聖地。'], ['モンゴル帝国を建てた人物', ['チンギス・ハン', 'フビライ', 'ティムール', 'バトゥ'], 0, '1206年にモンゴル高原を統一した。'], ['元の都大都を整備した皇帝', ['フビライ', 'チンギス・ハン', 'オゴタイ', 'ティムール'], 0, '元の初代皇帝。'], ['ルネサンスの中心都市の一つ', ['フィレンツェ', 'ロンドン', 'モスクワ', 'ベルリン'], 0, 'イタリアの都市国家。'], ['宗教改革を始めた人物として知られる', ['ルター', 'カルヴァン', 'エラスムス', 'トマス・モア'], 0, '1517年に95か条の論題を発表。'], ['新航路開拓で1492年に大西洋を横断した人物', ['コロンブス', 'マゼラン', 'ヴァスコ・ダ・ガマ', 'カブラル'], 0, '西回り航海でアメリカ大陸に到達した。'], ['喜望峰を経由してインド航路を開いた人物', ['ヴァスコ・ダ・ガマ', 'コロンブス', 'マゼラン', 'クック'], 0, '1498年にインドへ到達した。'], ['マゼラン艦隊が達成した偉業', ['世界周航', 'インド到達', 'アメリカ独立', '中国征服'], 0, 'マゼラン自身は途中で死亡したが艦隊が達成した。'], ['宗教改革後にイギリス国教会を成立させた王', ['ヘンリ8世', 'エリザベス1世', 'ルイ14世', 'フェリペ2世'], 0, 'ローマ教皇と対立して国教会を整備した。'], ['絶対王政期のフランス王', ['ルイ14世', 'ルイ16世', 'ナポレオン', 'シャルル10世'], 0, '「太陽王」と呼ばれた。'], ['イギリスで権利章典が成立した年', ['1689年', '1648年', '1776年', '1789年'], 0, '名誉革命後に成立した。'], ['アメリカ独立宣言が採択された年', ['1776年', '1689年', '1789年', '1815年'], 0, '7月4日に採択された。'], ['フランス革命が始まった年', ['1789年', '1776年', '1815年', '1848年'], 0, 'バスティーユ牢獄襲撃などが起きた。'], ['ナポレオンが皇帝に即位した年', ['1804年', '1789年', '1815年', '1848年'], 0, 'フランス第一帝政を開始した。'], ['ナポレオンが最終的に敗れた戦い', ['ワーテルローの戦い', 'トラファルガーの海戦', 'ライプツィヒの戦い', 'マレンゴの戦い'], 0, '1815年に敗北した。'], ['ウィーン会議を主導したオーストリア外相', ['メッテルニヒ', 'ビスマルク', 'タレーラン', 'ガリバルディ'], 0, '1814～15年のウィーン会議で中心的役割。'], ['産業革命が最初に本格化した国', ['イギリス', 'フランス', 'ドイツ', 'ロシア'], 0, '18世紀後半から進展した。'], ['蒸気機関の改良で知られる人物', ['ワット', 'ファラデー', 'エジソン', 'ベル'], 0, '産業革命の象徴的技術者。'], ['ドイツ帝国成立に中心的役割を果たした政治家', ['ビスマルク', 'メッテルニヒ', 'ナポレオン3世', 'ガリバルディ'], 0, '鉄血政策を進めた。'], ['イタリア統一運動で活躍した人物', ['ガリバルディ', 'ビスマルク', 'カヴール', 'ルター'], 0, '赤シャツ隊を率いた。'], ['ロシア革命で1917年に成立した政権を率いた人物', ['レーニン', 'スターリン', 'トロツキー', 'ニコライ2世'], 0, 'ボリシェヴィキ革命を指導した。'], ['第一次世界大戦が始まった年', ['1914年', '1905年', '1918年', '1939年'], 0, 'サライェヴォ事件を契機に開戦した。'], ['第一次世界大戦後に発足した国際機関', ['国際連盟', '国際連合', 'NATO', 'EU'], 0, '1920年に発足した。'], ['世界恐慌が始まった年', ['1929年', '1919年', '1933年', '1939年'], 0, 'ニューヨーク株式市場の暴落を契機に深刻化した。'], ['ナチ党の指導者', ['ヒトラー', 'ムッソリーニ', 'スターリン', 'チャーチル'], 0, 'ドイツで独裁体制を築いた。'], ['第二次世界大戦がヨーロッパで始まる直接の契機', ['ドイツのポーランド侵攻', '真珠湾攻撃', 'ノルマンディー上陸', '独ソ戦'], 0, '1939年9月の侵攻。'], ['第二次世界大戦後に発足した国際機関', ['国際連合', '国際連盟', 'NATO', 'OECD'], 0, '1945年に発足した。'], ['冷戦の東側陣営の軍事同盟', ['ワルシャワ条約機構', 'NATO', 'ASEAN', 'EU'], 0, '1955年に結成された。'], ['西側陣営の軍事同盟', ['NATO', 'ワルシャワ条約機構', '国際連盟', 'APEC'], 0, '1949年に成立した。'], ['キューバ危機が起こった年', ['1962年', '1956年', '1968年', '1979年'], 0, '米ソ対立が核戦争寸前まで高まった。'], ['ベルリンの壁が開放された年', ['1989年', '1979年', '1985年', '1991年'], 0, '冷戦終結の象徴的出来事。'], ['ソ連が解体した年', ['1991年', '1989年', '1990年', '1995年'], 0, 'ソビエト連邦が消滅した。'], ['中国で辛亥革命が起こった年', ['1911年', '1898年', '1905年', '1919年'], 0, '清朝が倒れ中華民国成立につながった。'], ['インド独立運動を指導した人物', ['ガンディー', 'ネルー', 'ジンナー', 'アリー・ジンナー'], 0, '非暴力・不服従を掲げた。'], ['南アフリカでアパルトヘイト撤廃に尽力した人物', ['ネルソン・マンデラ', 'ガンディー', 'キング牧師', 'ナセル'], 0, '1994年に大統領となった。'], ['イスラーム世界でオスマン帝国を建国した民族', ['トルコ系諸族', 'モンゴル人', 'スラブ人', 'ゲルマン人'], 0, 'アナトリアを基盤に発展した。'], ['明を建国した人物', ['朱元璋', '李自成', '康熙帝', '永楽帝'], 0, '1368年に明を建国した。'], ['清を建国した民族', ['満州人', '漢人', 'モンゴル人', 'チベット人'], 0, '女真族を母体とする。'], ['アヘン戦争が始まった年', ['1840年', '1830年', '1853年', '1860年'], 0, '清とイギリスの戦争。'], ['ベルリン会議で分割が進められた大陸', ['アフリカ', '南アメリカ', 'オセアニア', '北極圏'], 0, '帝国主義列強による分割が進んだ。'], ['国際連合の本部所在地', ['ニューヨーク', 'ジュネーヴ', 'パリ', 'ロンドン'], 0, 'アメリカ合衆国ニューヨークにある。'], ['EUの前身の一つとなった1951年の共同体', ['ヨーロッパ石炭鉄鋼共同体', '国際連盟', 'コメコン', 'ASEAN'], 0, '西欧統合の出発点の一つ。']];
+function build500(base,label){
+ const forms=[
+  x=>({q:`${x[0]}として正しいものを選べ。`,hint:"基礎確認"}),
+  x=>({q:`${x[0]}に関する説明として最も適切なものを選べ。`,hint:"定期テスト"}),
+  x=>({q:`${x[0]}について、次の選択肢から正答を一つ選べ。`,hint:"高校受験"}),
+  x=>({q:`${x[0]}を確認する問題。正しい答えはどれか。`,hint:"教科書確認"}),
+  x=>({q:`${x[0]}に関する記述として正しいものはどれか。`,hint:"参考書"}),
+  x=>({q:`${x[0]}を答える入試標準問題。`,hint:"大学受験"}),
+  x=>({q:`歴史事項「${x[0]}」について、正しい選択肢を選べ。`,hint:"資料確認"}),
+  x=>({q:`${label}の学習問題。${x[0]}に対応する答えはどれか。`,hint:"総合"}),
+  x=>({q:`${x[0]}について、誤りではないものを一つ選べ。`,hint:"演習"}),
+  x=>({q:`次の問いに答えよ。${x[0]}はどれか。`,hint:"実戦"})
+ ];
+ const out=[];
+ base.forEach((x,i)=>forms.forEach((form,j)=>{
+   let opts=[...x[1]];
+   const shift=(i*3+j)%opts.length;
+   opts=opts.slice(shift).concat(opts.slice(0,shift));
+   const f=form(x);
+   out.push({q:f.q+`（${f.hint}・${i+1}-${j+1}）`,a:opts,c:opts.indexOf(x[1][0]),e:x[3]});
+ }));
+ return out.slice(0,500);
+}
+let questionsJP=build500(jpBase,'日本史'), questionsWorld=build500(worldBase,'世界史');
+let mode="japan";
+let S={mode:"japan",lv:1,exp:0,hp:100,atk:10,def:8,maxHp:100,gold:50,actions:0,eventStep:3,threat:0,eventCount:0,skillUses:3,maxSkill:3,seen:[]};
+let enemy=null,guarding=false,qList=[],qi=0,logs=[],pendingAction=false;
+
+function go(id){
+ document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
+ const el=document.getElementById(id);
+ if(el) el.classList.add('active');
+ if(el){ el.classList.remove('action-flash'); void el.offsetWidth; el.classList.add('action-flash'); }
+ render();
+ if(id==='battle') renderBattle();
+ window.scrollTo(0,0);
+}
+function setMode(m){
+ mode=m;
+ S.mode=m;
+ render();
+ log((m==='world'?'🌍 世界史':'🇯🇵 日本史')+'モードに切り替えました。');
+}
+function render(){
+ const ids={lv:S.lv,hp:Math.max(0,S.hp),atk:S.atk,def:S.def,actions:S.actions,gold:S.gold,threat:Math.round(S.threat*100)+'%',nextEvent:Math.max(0,S.eventStep-S.eventCount)};
+ Object.entries(ids).forEach(([id,v])=>{const e=document.getElementById(id);if(e)e.textContent=v});
+ const expNeed=S.lv*100; const et=document.getElementById('expText'); if(et)et.textContent=S.exp+' / '+expNeed;
+ const eb=document.getElementById('expBar'); if(eb)eb.style.width=Math.min(100,S.exp/expNeed*100)+'%';
+ const lb=document.getElementById('log'); if(lb)lb.innerHTML=logs.slice(-30).map(x=>'・'+x).join('<br>');
+ if(enemy && document.getElementById('battle').classList.contains('active')) renderBattle();
+}
+function key(){return "rekishi_save_v3"}
+function saveGame(){localStorage.setItem(key(),JSON.stringify(S));log("💾 ゲームデータをセーブしました。")}
+function loadGame(show=true){let x=localStorage.getItem(key());if(!x){if(show)showModal("セーブなし","セーブデータがありません。");return false}try{S={...S,...JSON.parse(x)};mode=S.mode||"japan";log("📂 セーブデータを復帰しました。");render();return true}catch(e){if(show)showModal("復帰失敗","セーブデータを読み込めませんでした。");return false}}
+function resetGame(){if(!confirm("現在のゲームデータをリセットしますか？（セーブデータは残ります）"))return;resetWithoutConfirm()}
+function log(x){logs.push(x);render()}
+function addExp(n){S.exp+=n;log("EXP +"+n+"を獲得！");while(S.exp>=S.lv*100){S.exp-=S.lv*100;S.lv++;S.maxHp+=18;S.hp=S.maxHp;S.atk+=3;S.def+=2;S.skillUses=S.maxSkill;log("🎉 レベルアップ！必殺技使用回数も回復！")}saveTemp();render()}
+function saveTemp(){/* 行動中の復旧用には保存しない。明示セーブのみ */}
+function showEffect(text,cls=''){
+ const e=document.getElementById('effectText'); if(!e)return;
+ e.textContent=text; e.className=''; void e.offsetWidth; e.className='show '+cls;
+}
+function doAction(fn,el,quiet=false){
+ // 「探索」「歴史修行」「戦闘開始」は選択を開始するだけ。
+ // 実際の行動数加算は、選択肢の処理が完全に終わった completeAction() で行う。
+ return fn(el);
+}
+function completeAction(quiet=false, transition='home'){
+ S.actions++; S.eventCount++; S.threat=Math.min(2.5,S.threat+0.035);
+ if(!quiet)log("行動完了。時代の脅威が上昇。");
+ showEffect('⚡ 行動完了！');
+ render();
+ const due=S.eventCount>=S.eventStep;
+ // まず現在の行動を終了して「次の選択画面」へ移動する。
+ if(transition) go(transition);
+ // その後に強制イベントを発動。これで前の選択肢と重ならない。
+ if(due){
+   S.eventCount=0;
+   S.eventStep=3+Math.floor(Math.random()*6); // 3～8
+   setTimeout(()=>{
+     showEffect('🚨 次の選択へ――時代が動く！');
+     setTimeout(()=>forceEvent(),350);
+   },180);
+ }
+}
+function forceEvent(){[forcedUprising,forcedRebellion,forcedDisaster,forcedWar,forcedRaid][Math.floor(Math.random()*5)]()}
+function startQuiz(n=5){let pool=mode==="world"?questionsWorld:questionsJP;qList=[...pool].sort(()=>Math.random()-.5).slice(0,5);qi=0;go("quiz");showQ()}
+function showQ(){let x=qList[qi];document.getElementById("qnum").textContent=(qi+1)+"/5";document.getElementById("qtext").textContent=x.q;document.getElementById("explain").textContent="";let box=document.getElementById("choices");box.innerHTML="";x.a.forEach((v,i)=>{let b=document.createElement("button");b.className="choice slide";b.textContent=(i+1)+". "+v;b.onclick=()=>answer(i,b);box.appendChild(b)})}
+function answer(i,b){let x=qList[qi];document.querySelectorAll(".choice").forEach(z=>z.disabled=true);let ok=i===x.c;b.classList.add(ok?"correct":"wrong");if(!ok)document.querySelectorAll(".choice")[x.c].classList.add("correct");let gain=ok?30:5;showEffect(ok?"⭕ 正解！ +"+gain+" EXP":"❌ 不正解");S.seen.push(x.q);document.getElementById("explain").textContent=(ok?"正解！":"不正解。")+" "+x.e+" EXP +"+gain;addExp(gain);setTimeout(()=>{qi++;if(qi<5)showQ();else{log("5問の歴史修行を終えた！");completeAction(false,"home")}},750)}
+function startBattle(){
+ let es=mode==="world"?[["盗賊団","🏴",90,12,6,40],["傭兵隊長","🪖",125,15,8,60],["騎士隊","🛡️",155,17,10,85]]:[["野盗","👹",78,10,5,35],["山賊頭","🧟",115,13,7,55],["甲冑武者","🥷",150,16,9,85]];
+ let e=es[Math.floor(Math.random()*es.length)],scale=1+S.threat+S.actions*.008+S.lv*.045;
+ enemy={name:e[0],emoji:e[1],hp:Math.round(e[2]*scale),max:Math.round(e[2]*scale),atk:Math.round(e[3]*scale),def:Math.round(e[4]*(1+S.threat*.55)),exp:Math.round(e[5]*scale)};
+ guarding=false;document.getElementById("battleLog").innerHTML="";go("battle");battleMsg("⚔️ "+enemy.name+"が現れた！ 脅威 "+Math.round(S.threat*100)+"%");document.querySelector(".enemy").classList.add("flash")}
+function battleMsg(x){let b=document.getElementById("battleLog");b.innerHTML+="・"+x+"<br>";b.scrollTop=b.scrollHeight;renderBattle()}
+function renderBattle(){if(!enemy)return;document.getElementById("enemyName").textContent=enemy.name;document.getElementById("enemyEmoji").textContent=enemy.emoji;document.getElementById("enemyHp").textContent=Math.max(0,enemy.hp);document.getElementById("enemyMax").textContent=enemy.max;document.getElementById("enemyBar").style.width=Math.max(0,enemy.hp/enemy.max*100)+"%";document.getElementById("enemyAtk").textContent=enemy.atk;document.getElementById("enemyDef").textContent=enemy.def;document.getElementById("enemyThreat").textContent=Math.round(S.threat*100)+"%";document.getElementById("playerHp").textContent=Math.max(0,S.hp);document.getElementById("playerMax").textContent=S.maxHp;document.getElementById("playerBar").style.width=Math.max(0,S.hp/S.maxHp*100)+"%";document.querySelector("#battle .grid button:nth-child(3)").textContent="🔥 必殺技 ("+S.skillUses+"/"+S.maxSkill+")"}
+function enemyTurn(){if(!enemy||enemy.hp<=0)return;let dmg=Math.max(2,enemy.atk-S.def+Math.floor(Math.random()*6));if(guarding)dmg=Math.ceil(dmg*.4);S.hp-=dmg;guarding=false;showEffect("💥 "+dmg+" ダメージ");battleMsg(enemy.name+"の攻撃！ "+dmg+"ダメージ。");document.querySelector(".enemy").classList.add("shake");if(S.hp<=0){S.hp=0;battleMsg("💀 HPが0になった……。");setTimeout(gameOver,700)}}
+function attack(){if(!enemy)return;let dmg=Math.max(3,S.atk-enemy.def+Math.floor(Math.random()*8));enemy.hp-=dmg;document.querySelector(".enemy").classList.remove("hit");void document.querySelector(".enemy").offsetWidth;document.querySelector(".enemy").classList.add("hit");showEffect("⚔️ "+dmg+" ダメージ");battleMsg("⚔️ 攻撃！ "+dmg+"ダメージ。");if(enemy.hp<=0)return winBattle();setTimeout(enemyTurn,400)}
+function guard(){guarding=true;battleMsg("🛡️ 防御！ 次の攻撃を大幅軽減。");setTimeout(enemyTurn,400)}
+function battleSkill(){if(!enemy||S.skillUses<=0){battleMsg("必殺技の使用回数がない！");return}S.skillUses--;let dmg=Math.max(10,Math.round(S.atk*2.05-enemy.def+Math.random()*10));enemy.hp-=dmg;document.querySelector(".enemy").classList.remove("hit");void document.querySelector(".enemy").offsetWidth;document.querySelector(".enemy").classList.add("hit");showEffect("🔥 "+dmg+" ダメージ！");battleMsg("🔥 必殺技！ "+dmg+"ダメージ！ 残り "+S.skillUses+"回");if(enemy.hp<=0)return winBattle();setTimeout(enemyTurn,400)}
+function runAway(){log("戦闘から逃げた。");enemy=null;completeAction(false,"home")}
+function winBattle(){let reward=enemy.exp+S.lv*10;log("🏆 "+enemy.name+"を撃破！");addExp(reward);S.gold+=Math.floor(reward*.7);S.threat=Math.max(0,S.threat-.08);enemy=null;completeAction(false,"home");setTimeout(()=>showModal("勝利！","敵を倒した！<br>必殺技は使用回数を消費します。<br>宿場で回復できます。",[{t:"戻る",f:closeModal}]),300)}
+function showModal(t,x,buttons=[{t:"閉じる",f:closeModal}]){document.getElementById("modalTitle").textContent=t;document.getElementById("modalText").innerHTML=x;let box=document.getElementById("modalButtons");box.innerHTML="";buttons.forEach(b=>{let btn=document.createElement("button");btn.textContent=b.t;btn.onclick=b.f;box.appendChild(btn)});document.getElementById("modal").classList.add("show")}
+function closeModal(){
+ document.getElementById("modal").classList.remove("show");
+}
+function markPlace(el){if(!el)return;el.classList.remove('pressed');void el.offsetWidth;el.classList.add('pressed');setTimeout(()=>el.classList.remove('pressed'),500)}
+function placeChoice(title,text,yesText,yesFn){
+ showModal(title,text,[
+  {t:yesText,f:()=>{document.getElementById("modal").classList.remove("show");yesFn();completeAction(false,"map");}},
+  {t:"行動しない",f:()=>{document.getElementById("modal").classList.remove("show");showEffect("↩️ 行動しなかった");go("map");}}
+ ]);
+}
+function eventTown(el){
+ markPlace(el);showEffect('🏯 城へ');
+ placeChoice("🏯 尾張の城","この場所で行動しますか？<br><br>武将を支援すると力を得られるが、戦争の緊張も高まる。","行動する",()=>{
+  showModal("🏯 尾張の城：行動","武将を支援した！<br><br>攻撃 +2、脅威 +10%。");
+  S.atk+=2;S.threat=Math.min(2.5,S.threat+.10);log("攻撃 +2。脅威 +10%。");
+  setTimeout(()=>{if(document.getElementById("modal").classList.contains("show"))closeModal()},500);
+ });
+}
+function eventVillage(el){
+ markPlace(el);showEffect('🏘️ 村へ');
+ showModal("🏘️ 村","この場所で行動しますか？<br><br>行動すると、次の行動内容を選べます。",[
+  {t:"行動する",f:()=>{showModal("🏘️ 村で何をする？","",[
+   {t:"村を手伝う（+25両 / HP -12）",f:()=>{closeModal();S.gold+=25;S.hp=Math.max(0,S.hp-12);log("25両獲得、HP -12。");if(S.hp===0){gameOver();return}completeAction(false,"map");}},
+   {t:"村を説得（EXP+25 / 脅威+8%）",f:()=>{closeModal();addExp(25);S.threat=Math.min(2.5,S.threat+.08);log("EXP +25、脅威 +8%。");completeAction(false,"map");}},
+   {t:"行動しない",f:()=>{closeModal();showEffect("↩️ 行動しなかった");go("map");}}
+  ])}},
+  {t:"行動しない",f:()=>{closeModal();showEffect("↩️ 行動しなかった");go("map");}}
+ ]);
+}
+function eventShrine(el){
+ markPlace(el);showEffect('✨ 神社');
+ placeChoice("⛩️ 神社","この場所で休みますか？<br><br>休むとHPが回復します。","行動する",()=>{
+  let n=18;S.hp=Math.min(S.maxHp,S.hp+n);showEffect("✨ HP +"+n);log("神社で休み、HP +"+n+"。");
+ });
+}
+function eventTrader(el){
+ markPlace(el);showEffect('🔥 商人');
+ showModal("🧺 商人","この場所で行動しますか？<br><br>必殺技の使用回数だけを回復できます。",[
+  {t:"行動する",f:()=>{showModal("🧺 商人で何をする？","",[
+   {t:"15両：必殺技 +1回",f:()=>{if(S.gold<15){log("両が足りない。");return}closeModal();S.gold-=15;S.skillUses=Math.min(S.maxSkill,S.skillUses+1);showEffect("🔥 必殺技 +1回");log("必殺技 +1回（15両）。");completeAction(false,"map");}},
+   {t:"30両：必殺技 +2回",f:()=>{if(S.gold<30){log("両が足りない。");return}closeModal();S.gold-=30;S.skillUses=Math.min(S.maxSkill,S.skillUses+2);showEffect("🔥 必殺技 +2回");log("必殺技 +2回（30両）。");completeAction(false,"map");}},
+   {t:"行動しない",f:()=>{closeModal();showEffect("↩️ 行動しなかった");go("map");}}
+  ])}},
+  {t:"行動しない",f:()=>{closeModal();showEffect("↩️ 行動しなかった");go("map");}}
+ ]);
+}
+function eventInn(el){
+ markPlace(el);showEffect('💚 宿場');
+ showModal("🏮 宿場","この場所で行動しますか？<br><br>お金を支払ってHPだけを回復できます。",[
+  {t:"行動する",f:()=>{showModal("🏮 宿場で何をする？","",[
+   {t:"10両：HP +20",f:()=>{if(S.gold<10){log("両が足りない。");return}closeModal();S.gold-=10;S.hp=Math.min(S.maxHp,S.hp+20);showEffect("💚 HP +20");log("HP +20（10両）。");completeAction(false,"map");}},
+   {t:"20両：HP +40",f:()=>{if(S.gold<20){log("両が足りない。");return}closeModal();S.gold-=20;S.hp=Math.min(S.maxHp,S.hp+40);showEffect("💚 HP +40");log("HP +40（20両）。");completeAction(false,"map");}},
+   {t:"行動しない",f:()=>{closeModal();showEffect("↩️ 行動しなかった");go("map");}}
+  ])}},
+  {t:"行動しない",f:()=>{closeModal();showEffect("↩️ 行動しなかった");go("map");}}
+ ]);
+}
+
+function gameOver(){
+ document.getElementById("modalTitle").textContent="💀 GAME OVER";
+ document.getElementById("modalText").innerHTML="HPが0になりました。<br><br>セーブ済みデータがある場合は、そこから復帰できます。";
+ const box=document.getElementById("modalButtons");box.innerHTML="";
+ let a=document.createElement("button");a.textContent="最初からやり直す";a.onclick=()=>{document.getElementById("modal").classList.remove("show");resetWithoutConfirm()};box.appendChild(a);
+ let b=document.createElement("button");b.textContent="セーブから復帰";b.onclick=()=>{document.getElementById("modal").classList.remove("show");if(!loadGame(false))resetWithoutConfirm();else go("home")};box.appendChild(b);
+ document.getElementById("modal").classList.add("show");
+}
+function resetWithoutConfirm(){S={mode:"japan",lv:1,exp:0,hp:100,atk:10,def:8,maxHp:100,gold:50,actions:0,eventStep:3,threat:0,eventCount:0,skillUses:3,maxSkill:3,seen:[]};mode="japan";logs=[];go("home");log("🔄 新しいゲームを開始しました。セーブデータは残っています。")}
+function forcedUprising(){showModal("🚩 強制イベント：一揆","領内で農民が一斉に立ち上がった！",[{t:"鎮圧する",f:()=>{closeModal();setTimeout(startBattle,100)}},{t:"要求を聞く（脅威-18%）",f:()=>{S.threat=Math.max(0,S.threat-.18);log("一揆勢と交渉した。");closeModal()}}])}
+function forcedRebellion(){showModal("🔥 強制イベント：反乱","兵士が反旗を翻した！",[{t:"戦う（攻撃+1）",f:()=>{S.atk++;closeModal();setTimeout(startBattle,100)}},{t:"守りを固める（防御+3）",f:()=>{S.def+=3;log("防御 +3。");closeModal()}}])}
+function forcedDisaster(){let dmg=12;S.hp=Math.max(1,S.hp-dmg);S.gold=Math.max(0,S.gold-8);showModal("🌪️ 強制イベント：自然災害","大雨と土砂崩れが領内を襲った。<br><br>HP -12、8両を失った。")}
+function forcedWar(){showModal("⚔️ 強制イベント：戦","隣国との戦が始まった。",[{t:"戦場へ向かう",f:()=>{closeModal();setTimeout(startBattle,100)}},{t:"兵站を支える（25両・防御+1）",f:()=>{S.gold+=25;S.def++;log("兵站を整えた。");closeModal()}}])}
+function forcedRaid(){showModal("🏴 強制イベント：襲撃","夜襲だ！敵が村を襲っている。",[{t:"救援に向かう",f:()=>{closeModal();setTimeout(startBattle,100)}},{t:"村を守る（防御+2・15両）",f:()=>{S.def+=2;S.gold=Math.max(0,S.gold-15);log("村を守った。");closeModal()}}])}
+
+// 古いlocalStorageの自動復元はしない。ページを開くたび新規開始。
+// 「リンクを閉じる度にリセット」＝メモリ上のゲーム状態は保持しない。
+// 明示セーブは別キーに保存され、リセット後でも「セーブから復帰」で戻せる。
+window.addEventListener("pagehide",()=>{enemy=null;qList=[];qi=0});
+render();
+</script>
+</body>
+</html>
